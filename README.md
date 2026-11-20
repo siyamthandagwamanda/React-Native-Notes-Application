@@ -94,5 +94,5 @@ To protect user accounts within a local-only setup, without extra dependencies, 
 
 ## Authors
 
-- YOUR-NAME
-- PARTNER-NAME
+- Siyamthanda Gwamanda
+- Mlab 2026 Cohort @CodeTriber
