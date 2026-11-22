@@ -14,6 +14,8 @@ function RootNavigator() {
 
       <Stack.Protected guard={!!user}>
         <Stack.Screen name="index" />
+        <Stack.Screen name="category/[name]" options={{ headerShown: true }} />
+        <Stack.Screen name="note" options={{ headerShown: true, title: 'Note' }} />
       </Stack.Protected>
     </Stack>
   );
