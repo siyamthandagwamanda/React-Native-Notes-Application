@@ -8,7 +8,10 @@ then create, view, edit, delete, search and sort notes grouped by category
 
 ## Download the app
 
-**APK (Google Drive):** PASTE-YOUR-DRIVE-LINK-HERE
+**APK (Google Drive):** https://expo.dev/accounts/siyamthandagwamanda/projects/Notes-App/builds/2e9c6b86-9f76-44b5-9567-c52adb20de83
+
+Android only. Download the APK on an Android phone, open it, and allow installs from
+unknown sources if asked.
 
 ## Run it locally
 
@@ -26,51 +29,66 @@ Scan the QR code with **Expo Go** (Android) or the Camera app (iOS).
 - **Log in** with email and password
 - **Protected routes:** logged-out users can only reach Login and Register;
   logged-in users cannot go back to Login or Register
-- **Profile:** update username, email and password
+- **Profile:** update username, email and password (leave the password empty to keep it)
 - **Log out**
 
 ### Notes management
 - **Add** a note with text, category and an optional title. The date added is saved automatically
-- **View** all your notes, with each category on its own page
+- **View** your notes, with each category on its own page
 - **Edit** a note. Edited notes show when they were last updated
-- **Delete** a note
+- **Delete** a note, with a confirmation prompt
 - **Search:** a note matches when every typed word appears in its title or text
-- **Sort** by date added, oldest first or newest first
+- **Sort** by date added, newest first or oldest first
+
+## Screens
+
+| Screen | File | Access |
+| --- | --- | --- |
+| Login | `src/app/login.tsx` | Logged out |
+| Register | `src/app/register.tsx` | Logged out |
+| Home (categories) | `src/app/index.tsx` | Logged in |
+| Category page | `src/app/category/[name].tsx` | Logged in |
+| Add / edit note | `src/app/note.tsx` | Logged in |
+| Profile | `src/app/profile.tsx` | Logged in |
 
 ## Navigation
 
-The app uses **Expo Router** (file-based routing). Every file in `src/app` is a screen.
-`src/app/_layout.tsx` uses `Stack.Protected` to decide which screens are available:
+The app uses **Expo Router** (file-based routing): every file in `src/app` is a screen.
 
-| Logged out | Logged in |
-| --- | --- |
-| Login, Register | Home, category pages, note screens, profile |
-
-When a user logs in or out, the guards switch and the router moves to an allowed screen automatically.
+- `src/app/_layout.tsx` uses `Stack.Protected` to decide which screens are available.
+  When a user logs in or out, the guards switch and the router moves to an allowed screen automatically.
+- `category/[name].tsx` is a **dynamic route**: one file serves `/category/Work`,
+  `/category/Study` and `/category/Personal`.
+- The note screen receives **route params**: an `id` when editing, or a `category` when adding.
 
 ## Project structure
 
 ```
 src/
-  app/            screens (Expo Router routes)
-    _layout.tsx   protected routing
+  app/                   screens (Expo Router routes)
+    _layout.tsx          protected routing
     login.tsx
     register.tsx
-    index.tsx     home
+    index.tsx            home: category buttons, profile, log out
+    category/
+      [name].tsx         notes in one category, with search and sort
+    note.tsx             add and edit form
+    profile.tsx          update credentials
   components/
-    AuthContext.tsx   shares the logged-in user with every screen
+    AuthContext.tsx      shares the logged-in user with every screen
+    NoteCard.tsx         one note in a list
   services/
-    storage.ts    all AsyncStorage reads and writes (users and notes)
+    storage.ts           all AsyncStorage reads and writes (users and notes)
   types/
-    types.ts      User and Note types
+    types.ts             User and Note types, category list
   utils/
-    hash.ts       password hashing helper
+    hash.ts              password hashing helper
   styles/
-    form.ts       shared form styles
+    form.ts              shared form styles
 ```
 
-Screens never call AsyncStorage directly. They call functions in `services/storage.ts`,
-which keeps the UI separate from the data layer.
+**Separation of concerns:** screens never call AsyncStorage directly. They call functions in
+`services/storage.ts`, so the UI is kept separate from the data layer.
 
 ## Security and storage
 
@@ -86,13 +104,26 @@ To protect user accounts within a local-only setup, without extra dependencies, 
   A production version would keep credentials in `expo-secure-store` (or native Keychain/Keystore)
   and use a proper hashing algorithm such as bcrypt or Argon2, usually on a backend server.
 
+Data is stored per device, so an account created on one phone does not exist on another.
+The user stays logged in only while the app is open.
+
+## Building the APK
+
+```bash
+npx eas-cli@latest login
+npx eas-cli@latest build -p android --profile preview
+```
+
+The `preview` profile in `eas.json` produces an installable `.apk`.
+
 ## Built with
 
 - Expo and Expo Router
 - React Native with TypeScript
 - `@react-native-async-storage/async-storage`
+- EAS Build
 
 ## Authors
 
 - Siyamthanda Gwamanda
-- Mlab 2026 Cohort @CodeTriber
+- Mlab CodeTriber
