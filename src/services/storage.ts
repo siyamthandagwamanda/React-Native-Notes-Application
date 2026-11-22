@@ -32,6 +32,9 @@ export async function login(email: string, password: string) {
 
 export async function updateUser(user: User, password?: string) {
   const users = await load<User>('users');
+  if (users.find((u) => u.email === user.email && u.id !== user.id)) {
+    throw new Error('Email already used by another account');
+  }
   const updated = { ...user, password: password ? simpleHash(password) : user.password };
   await save('users', users.map((u) => (u.id === user.id ? updated : u)));
   return updated;

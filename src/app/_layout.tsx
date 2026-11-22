@@ -16,6 +16,7 @@ function RootNavigator() {
         <Stack.Screen name="index" />
         <Stack.Screen name="category/[name]" options={{ headerShown: true }} />
         <Stack.Screen name="note" options={{ headerShown: true, title: 'Note' }} />
+        <Stack.Screen name="profile" options={{ headerShown: true, title: 'Profile' }} />
       </Stack.Protected>
     </Stack>
   );

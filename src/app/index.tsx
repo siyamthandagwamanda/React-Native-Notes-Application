@@ -1,8 +1,8 @@
-import { Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
+import { Pressable, Text, View } from 'react-native';
 import { useAuth } from '../components/AuthContext';
-import { CATEGORIES } from '../types/types';
 import { form } from '../styles/form';
+import { CATEGORIES } from '../types/types';
 
 export default function Home() {
   const { user, setUser } = useAuth();
@@ -22,9 +22,14 @@ export default function Home() {
         </Pressable>
       ))}
 
+      <Pressable onPress={() => router.push('/profile')}>
+        <Text style={form.link}>Profile</Text>
+      </Pressable>
+
       <Pressable onPress={() => setUser(null)}>
         <Text style={form.link}>Log out</Text>
       </Pressable>
+
     </View>
   );
 }
