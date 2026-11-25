@@ -57,6 +57,12 @@ export async function editNote(note: Note) {
   await save('notes', notes.map((n) => (n.id === note.id ? edited : n)));
 }
 
+// Pin or unpin. Not counted as an edit, so updatedAt stays the same.
+export async function pinNote(id: string, pinned: boolean) {
+  const notes = await load<Note>('notes');
+  await save('notes', notes.map((n) => (n.id === id ? { ...n, pinned } : n)));
+}
+
 export async function deleteNote(id: string) {
   const notes = await load<Note>('notes');
   await save('notes', notes.filter((n) => n.id !== id));

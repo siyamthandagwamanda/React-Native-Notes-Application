@@ -1,14 +1,15 @@
-import { router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '../../components/AuthContext';
 import NoteCard from '../../components/NoteCard';
-import { deleteNote, getNotes } from '../../services/storage';
-import { form } from '../../styles/form';
+import { deleteNote, getNotes, pinNote } from '../../services/storage';
 import { Note } from '../../types/types';
+import { sortNotes } from '../../utils/sortNotes';
+import { form } from '../../styles/form';
 
 export default function CategoryScreen() {
-  const { name } = useLocalSearchParams<{ name: string }>(); // e.g. "Work" from the URL
+  const { name } = useLocalSearchParams<{ name: string }>();
   const { user } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
   const [search, setSearch] = useState('');
@@ -21,7 +22,7 @@ export default function CategoryScreen() {
     setNotes(all.filter((note) => note.category === name));
   }, [user, name]);
 
-  // Reload every time the screen comes into view (e.g. after adding a note).
+  // Reload every time the screen comes into view.
   useFocusEffect(
     useCallback(() => {
       loadNotes();
@@ -42,20 +43,30 @@ export default function CategoryScreen() {
     ]);
   }
 
-  // Search: a note matches only if every typed word is in its title or text.
+  async function togglePin(note: Note) {
+    await pinNote(note.id, !note.pinned);
+    loadNotes();
+  }
+
+  // Search: every typed word must be in the title or text. Then pinned first, by date.
   const words = search.toLowerCase().split(' ').filter(Boolean);
-  const visibleNotes = notes
-    .filter((note) => words.every((word) => `${note.title} ${note.text}`.toLowerCase().includes(word)))
-    // Sort by date added.
-    .sort((a, b) =>
-      newestFirst ? b.createdAt.localeCompare(a.createdAt) : a.createdAt.localeCompare(b.createdAt)
-    );
+  const matching = notes.filter((note) =>
+    words.every((word) => `${note.title} ${note.text}`.toLowerCase().includes(word))
+  );
+  const visibleNotes = sortNotes(matching, newestFirst);
 
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ title: name }} />
 
-      <TextInput style={form.input} placeholder="Search notes" value={search} onChangeText={setSearch} />
+      <TextInput
+        style={form.input}
+        placeholder="Search notes"
+        value={search}
+        onChangeText={setSearch}
+        autoCorrect={false}
+        spellCheck={false}
+      />
 
       <View style={styles.row}>
         <Pressable onPress={() => setNewestFirst(!newestFirst)}>
@@ -73,10 +84,12 @@ export default function CategoryScreen() {
           <NoteCard
             note={item}
             onPress={() => router.push({ pathname: '/note', params: { id: item.id } })}
+            onPin={() => togglePin(item)}
             onDelete={() => confirmDelete(item.id)}
           />
         )}
         ListEmptyComponent={<Text style={styles.empty}>No notes yet.</Text>}
+        keyboardShouldPersistTaps="handled"
       />
     </View>
   );
