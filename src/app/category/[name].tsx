@@ -1,12 +1,14 @@
-import { useCallback, useState } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../../components/AuthContext';
+import FloatingButton from '../../components/FloatingButton';
 import NoteCard from '../../components/NoteCard';
-import { deleteNote, getNotes, pinNote } from '../../services/storage';
+import { useNoteActions } from '../../hooks/useNoteActions';
+import { getNotes } from '../../services/storage';
+import { form } from '../../styles/form';
 import { Note } from '../../types/types';
 import { sortNotes } from '../../utils/sortNotes';
-import { form } from '../../styles/form';
 
 export default function CategoryScreen() {
   const { name } = useLocalSearchParams<{ name: string }>();
@@ -29,24 +31,7 @@ export default function CategoryScreen() {
     }, [loadNotes])
   );
 
-  function confirmDelete(id: string) {
-    Alert.alert('Delete note?', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          await deleteNote(id);
-          loadNotes();
-        },
-      },
-    ]);
-  }
-
-  async function togglePin(note: Note) {
-    await pinNote(note.id, !note.pinned);
-    loadNotes();
-  }
+  const { confirmDelete, togglePin } = useNoteActions(loadNotes);
 
   // Search: every typed word must be in the title or text. Then pinned first, by date.
   const words = search.toLowerCase().split(' ').filter(Boolean);
@@ -68,14 +53,9 @@ export default function CategoryScreen() {
         spellCheck={false}
       />
 
-      <View style={styles.row}>
-        <Pressable onPress={() => setNewestFirst(!newestFirst)}>
-          <Text style={form.link}>Sort: {newestFirst ? 'Newest first' : 'Oldest first'}</Text>
-        </Pressable>
-        <Pressable onPress={() => router.push({ pathname: '/note', params: { category: name } })}>
-          <Text style={form.link}>+ Add note</Text>
-        </Pressable>
-      </View>
+      <Pressable onPress={() => setNewestFirst(!newestFirst)}>
+        <Text style={styles.sort}>Sort: {newestFirst ? 'Newest first' : 'Oldest first'}</Text>
+      </Pressable>
 
       <FlatList
         data={visibleNotes}
@@ -85,18 +65,23 @@ export default function CategoryScreen() {
             note={item}
             onPress={() => router.push({ pathname: '/note', params: { id: item.id } })}
             onPin={() => togglePin(item)}
-            onDelete={() => confirmDelete(item.id)}
+            onDelete={() => confirmDelete(item)}
           />
         )}
-        ListEmptyComponent={<Text style={styles.empty}>No notes yet.</Text>}
+        ListEmptyComponent={<Text style={styles.empty}>No notes yet. Tap + to add one.</Text>}
+        contentContainerStyle={styles.listContent}
         keyboardShouldPersistTaps="handled"
       />
+
+      {/* Opens a new note already set to this category */}
+      <FloatingButton onPress={() => router.push({ pathname: '/note', params: { category: name } })} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, gap: 12, backgroundColor: '#fff' },
-  row: { flexDirection: 'row', justifyContent: 'space-between' },
+  sort: { color: '#2563EB', fontWeight: 'bold' },
+  listContent: { paddingBottom: 100 },
   empty: { textAlign: 'center', color: '#888', marginTop: 24 },
 });
